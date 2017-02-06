@@ -3,6 +3,8 @@ package org.usfirst.frc.team4361.robot;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.TalonSRX;
+import edu.wpi.first.wpilibj.Joystick;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -12,8 +14,17 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * directory.
  */
 public class Robot extends IterativeRobot {
+	
+	TalonSRX[] CAN;
+	Joystick[] stick;
+	
+	double stick0Y, stick1Y;
+	
+	Drive Left, Right, Shooter, Climber, Intake, Agitator;
+	
 	final String defaultAuto = "Default";
 	final String customAuto = "My Auto";
+	
 	String autoSelected;
 	SendableChooser<String> chooser = new SendableChooser<>();
 
@@ -23,6 +34,37 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void robotInit() {
+		
+		CAN = new TalonSRX[8];
+		for (int i = 0; i < CAN.length; i++)
+		{
+			CAN[i] = new TalonSRX(i);
+		}
+		
+		TalonSRX[] left = {CAN[0], CAN[1]};
+		Left = new Drive(left);
+
+		TalonSRX[] right = {CAN[2], CAN[3]};
+		Right = new Drive(right);
+		
+		TalonSRX[] intake = {CAN[4]};
+		Intake = new Drive(intake);
+		
+		TalonSRX[] shooter = {CAN[5]};
+		Shooter = new Drive(shooter);
+		 
+		 TalonSRX[] climber = {CAN[6]};
+		 Climber = new Drive(climber);
+		 
+		 TalonSRX[] agitator = {CAN[7]};
+		 Agitator = new Drive(agitator);
+		 
+		 stick = new Joystick[3];
+		 for (int i = 0; i < stick.length; i++)
+		 {
+			 stick[i] = new Joystick(i);
+		 }
+		
 		chooser.addDefault("Default Auto", defaultAuto);
 		chooser.addObject("My Auto", customAuto);
 		SmartDashboard.putData("Auto choices", chooser);
@@ -68,6 +110,26 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void teleopPeriodic() {
+		stick0Y = stick[0].getY();
+		stick1Y = stick[1].getY();
+
+		Left.drive(stick0Y);
+		Right.drive(stick1Y);
+		
+		if(stick[2].getIsXbox())
+		{
+			if(stick[2].getRawButton(0))
+			{
+				Shooter.drive(-.55);
+				Agitator.drive(1);
+			}
+			
+			if(stick[2].getRawButton(1))
+				Climber.drive(1);
+			
+			if(stick[2].getRawButton(2))
+				Intake.drive(-1);
+		}
 	}
 
 	/**
