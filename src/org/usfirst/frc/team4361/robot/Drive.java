@@ -1,17 +1,17 @@
 package org.usfirst.frc.team4361.robot;
-import edu.wpi.first.wpilibj.TalonSRX;
+import com.ctre.CANTalon;
 
 public class Drive {
-	TalonSRX[] CAN;
+	CANTalon[] CAN;
 	
-	public Drive(TalonSRX[] CAN)
+	public Drive(CANTalon[] CAN)
 	{
 		this.CAN = CAN;
 	}
 	
 	public void drive(double val)
 	{
-		for (TalonSRX tal : CAN)
+		for (CANTalon tal : CAN)
 		{
 			tal.set(val);
 		}

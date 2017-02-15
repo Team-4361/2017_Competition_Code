@@ -3,8 +3,8 @@ package org.usfirst.frc.team4361.robot;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.TalonSRX;
 import edu.wpi.first.wpilibj.Joystick;
+import com.ctre.CANTalon;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -15,12 +15,13 @@ import edu.wpi.first.wpilibj.Joystick;
  */
 public class Robot extends IterativeRobot {
 	
-	TalonSRX[] CAN;
+	CANTalon[] CAN;
 	Joystick[] stick;
 	
 	double stick0Y, stick1Y;
 	
-	Drive Left, Right, Shooter, Climber, Intake, Agitator;
+	Drive Left, Right, Climber, Intake, Agitator;
+	Shooter shoot;
 	
 	final String defaultAuto = "Default";
 	final String customAuto = "My Auto";
@@ -33,37 +34,37 @@ public class Robot extends IterativeRobot {
 	 * used for any initialization code.
 	 */
 	@Override
-	public void robotInit() {
-		
-		CAN = new TalonSRX[8];
+	public void robotInit() 
+	{
+	
+		CAN = new CANTalon[9];
 		for (int i = 0; i < CAN.length; i++)
 		{
-			CAN[i] = new TalonSRX(i);
+			CAN[i] = new CANTalon(i);
 		}
 		
-		TalonSRX[] left = {CAN[0], CAN[1]};
+		CANTalon[] left = {CAN[0], CAN[1]};
 		Left = new Drive(left);
-
-		TalonSRX[] right = {CAN[2], CAN[3]};
+	
+		CANTalon[] right = {CAN[2], CAN[3]};
 		Right = new Drive(right);
 		
-		TalonSRX[] intake = {CAN[4]};
+		CANTalon[] intake = {CAN[4]};
 		Intake = new Drive(intake);
 		
-		TalonSRX[] shooter = {CAN[5]};
-		Shooter = new Drive(shooter);
+		shoot = new Shooter(CAN[5], CAN[6]);
 		 
-		 TalonSRX[] climber = {CAN[6]};
-		 Climber = new Drive(climber);
-		 
-		 TalonSRX[] agitator = {CAN[7]};
-		 Agitator = new Drive(agitator);
-		 
-		 stick = new Joystick[3];
-		 for (int i = 0; i < stick.length; i++)
-		 {
-			 stick[i] = new Joystick(i);
-		 }
+		CANTalon[] climber = {CAN[7]};
+		Climber = new Drive(climber);
+		
+		CANTalon[] agitator = {CAN[8]};
+		Agitator = new Drive(agitator);
+		
+		stick = new Joystick[3];
+		for (int i = 0; i < stick.length; i++)
+		{
+			stick[i] = new Joystick(i);
+		}
 		
 		chooser.addDefault("Default Auto", defaultAuto);
 		chooser.addObject("My Auto", customAuto);
@@ -109,7 +110,8 @@ public class Robot extends IterativeRobot {
 	 * This function is called periodically during operator control
 	 */
 	@Override
-	public void teleopPeriodic() {
+	public void teleopPeriodic() 
+	{
 		stick0Y = stick[0].getY();
 		stick1Y = stick[1].getY();
 
@@ -118,18 +120,24 @@ public class Robot extends IterativeRobot {
 		
 		if(stick[2].getIsXbox())
 		{
+			//Shooter
+			shoot.Shoot(stick[2].getRawButton(0));
 			if(stick[2].getRawButton(0))
-			{
-				Shooter.drive(-.55);
 				Agitator.drive(1);
-			}
 			
+			//Climber
 			if(stick[2].getRawButton(1))
 				Climber.drive(1);
 			
+			//Intake
 			if(stick[2].getRawButton(2))
 				Intake.drive(-1);
 		}
+		
+		//Smartdashboard Values
+		SmartDashboard.putNumber("ShooterVoltage", CAN[5].getOutputVoltage());
+		SmartDashboard.putNumber("ClimberVoltage", CAN[7].getOutputVoltage());
+		
 	}
 
 	/**
