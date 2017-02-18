@@ -22,7 +22,7 @@ public class Robot extends IterativeRobot {
 	Encoder[] enc;
 	
 	
-	double stick0Y, stick1Y, leftInput, rightInput;
+	double stick0Y, stick1Y, stick1X, leftInput, rightInput;
 	
 	Drive Left, Right, Climber, Intake, Agitator;
 	Shooter Shoot;
@@ -162,11 +162,14 @@ public class Robot extends IterativeRobot {
 		
 		stick0Y = stick[0].getY();
 		stick1Y = stick[1].getY();
-
+		stick1X = stick[1].getX();
+		
 		if(gearing)
 		{
 			leftInput = stick0Y/2;
 			rightInput = stick1Y/2;
+			
+			stick1X = stick1X/2;
 		}
 		else
 		{
@@ -174,13 +177,27 @@ public class Robot extends IterativeRobot {
 			rightInput = stick1Y;
 		}
 		
-		Left.drive(leftInput);
-		Right.drive(rightInput);
+		if(stick[1].getRawButton(3))
+		{
+			Left.drive(-rightInput);
+			Right.drive(rightInput);
+		}
+		else if(stick[1].getRawButton(4))
+		{
+			Left.drive(stick1X);
+			Right.drive(stick1X);
+		}
+		else
+		{
+			Left.drive(leftInput);
+			Right.drive(rightInput);
+		}
+		
 		
 		//Climber
-		if(stick[1].getRawButton(3))
+		if(stick[0].getRawButton(3))
 			Climber.drive(.2);
-		if(stick[1].getRawButton(4))
+		if(stick[0].getRawButton(4))
 			Climber.drive(.75);
 		
 		if(stick[2].getIsXbox())
