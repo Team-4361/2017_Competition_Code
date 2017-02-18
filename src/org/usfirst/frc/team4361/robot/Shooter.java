@@ -22,13 +22,13 @@ public class Shooter {
 	{
 		if(Button && time.get() >= 10)
 		{
+			Agitator.set(-.5);
 			Indexer.set(.3);
 			time.stop();
 			time.reset();
 		}
 		else if(Button && Start)
 		{
-			Agitator.set(-.5);
 			Shooter.set(-.65);
 			time.reset();
 			time.start();

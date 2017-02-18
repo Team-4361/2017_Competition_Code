@@ -22,12 +22,12 @@ public class Robot extends IterativeRobot {
 	Encoder[] enc;
 	
 	
-	double stick0Y, stick1Y;
+	double stick0Y, stick1Y, leftInput, rightInput;
 	
 	Drive Left, Right, Climber, Intake, Agitator;
 	Shooter Shoot;
 	
-	boolean blueSide;
+	boolean blueSide, gearing, gearChanged;
 	
 	Autonomous auto;
 	
@@ -42,6 +42,9 @@ public class Robot extends IterativeRobot {
 	public void robotInit() 
 	{
 	
+		gearing = false;
+		gearChanged = false;
+		
 		CAN = new CANTalon[9];
 		for (int i = 0; i < CAN.length; i++)
 		{
@@ -146,22 +149,44 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() 
 	{
+		//Gearing Input
+		if(stick[1].getRawButton(2) && !gearChanged)
+		{
+			gearing = !gearing;
+			gearChanged = true;
+		}
+		if(!stick[1].getRawButton(2) && gearChanged)
+		{
+			gearChanged = false;
+		}
+		
 		stick0Y = stick[0].getY();
 		stick1Y = stick[1].getY();
 
-		Left.drive(stick0Y);
-		Right.drive(stick1Y);
+		if(gearing)
+		{
+			leftInput = stick0Y/2;
+			rightInput = stick1Y/2;
+		}
+		else
+		{
+			leftInput = stick0Y;
+			rightInput = stick1Y;
+		}
+		
+		Left.drive(leftInput);
+		Right.drive(rightInput);
+		
+		//Climber
+		if(stick[1].getRawButton(3))
+			Climber.drive(.2);
+		if(stick[1].getRawButton(4))
+			Climber.drive(.75);
 		
 		if(stick[2].getIsXbox())
 		{
 			//Shooter
 			Shoot.Shoot(stick[2].getRawButton(0));
-			if(stick[2].getRawButton(0))
-				Agitator.drive(1);
-			
-			//Climber
-			if(stick[2].getRawButton(1))
-				Climber.drive(1);
 			
 			//Intake
 			if(stick[2].getRawButton(2))
@@ -171,6 +196,7 @@ public class Robot extends IterativeRobot {
 		//Smartdashboard Values
 		SmartDashboard.putNumber("ShooterVoltage", CAN[5].getOutputVoltage());
 		SmartDashboard.putNumber("ClimberVoltage", CAN[7].getOutputVoltage());
+		SmartDashboard.putBoolean("Gear", gearing);
 		
 	}
 

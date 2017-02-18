@@ -10,6 +10,7 @@ public class Autonomous {
 	double diameter;
 	double circumference;
 	double distanceNeeded;
+	final double robotLength;
 	
 	boolean isEnc, hasRun;
 	int runNum, lEncNum, rEncNum, large;
@@ -26,11 +27,13 @@ public class Autonomous {
 	
 	TurnControl turn;
 	
-	boolean blueSide;
+	boolean redSide;
 	
 	//Constructers
-	public Autonomous(Drive left, Drive right, Shooter shoot, boolean blueSide)
+	public Autonomous(Drive left, Drive right, Shooter shoot, boolean redSide)
 	{
+		robotLength = 35.5;
+		
 		diameter = 6 + 1/8;
 		circumference = diameter * Math.PI;
 		
@@ -50,11 +53,11 @@ public class Autonomous {
 		
 		navx = new AHRS(SerialPort.Port.kMXP);
 		
-		this.blueSide = blueSide;
+		this.redSide = redSide;
 	}
-	public Autonomous(Drive left, Drive right, Shooter shoot, boolean blueSide, Encoder lEnc, Encoder rEnc)
+	public Autonomous(Drive left, Drive right, Shooter shoot, boolean redSide, Encoder lEnc, Encoder rEnc)
 	{
-		this(left, right, shoot, blueSide);
+		this(left, right, shoot, redSide);
 		this.lEnc = lEnc;
 		this.rEnc = rEnc;
 		runNum = 0;
@@ -65,39 +68,47 @@ public class Autonomous {
 	public void defaultGoToBaseLine()
 	{
 		if(runNum == 0)
-			goDistance(93.5, .3);
+			goDistance(94 - robotLength, .3);
 	}
 	
 	public void Feeder()
 	{
 		if(runNum == 0)
-			goDistance(75.10132, .3);
+			goDistance(108.39373 - robotLength, .3);
 		if(runNum == 1)
 			turn(-120);
 		if(runNum == 2)
-			goDistance(-71.9735, .3);
+			goDistance(46.79856 - robotLength, -.3);
 	}
 	
 	public void Airship()
 	{
 		if(runNum == 0)
-			goDistance(93.5, .3);
+			goDistance(50 - robotLength, .3);
+		if(runNum == 1)
+			turn(180);
+		if(runNum == 2)
+			goDistance(64.6985, -.3);
 	}
 	
 	public void Boiler()
 	{
 		if(runNum == 0)
-			goDistance(63.03447, .3);
+			goDistance(89.09147 - robotLength, .3);
 		if(runNum == 1)
 			turn(120);
 		if(runNum == 2)
-			goDistance(-95.93105, .3);
+			goDistance(85.30307 + robotLength, -.3);
 	}
 	
 	public void ShootInBoiler()
 	{
 		if(runNum == 0)
-			goDistance(93.5, .3);
+			goDistance(67.8642 - robotLength, .3);
+		if(runNum == 1)
+			turn(120);
+		if(runNum == 2)
+			goDistance(84.46555 - robotLength, -.3);
 	}
 	
 	
@@ -166,7 +177,7 @@ public class Autonomous {
 
 	private void turnEncoder(double angle)
 	{
-		if(blueSide) angle = -angle;
+		if(redSide) angle = -angle;
 		
 		double percent = Math.abs(angle)/360;
 		if(!hasRun)
@@ -206,7 +217,7 @@ public class Autonomous {
 	
 	private void turn(double angle)
 	{
-		if(blueSide) angle = -angle;
+		if(redSide) angle = -angle;
 		
 		double speed =turn.turnAngle(navx.getAngle(), angle);
    		left.drive(-speed);
