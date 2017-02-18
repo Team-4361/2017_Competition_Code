@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Joystick;
 import com.ctre.CANTalon;
+import edu.wpi.first.wpilibj.Encoder;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -18,13 +19,17 @@ public class Robot extends IterativeRobot {
 	CANTalon[] CAN;
 	Joystick[] stick;
 	
+	Encoder[] enc;
+	
+	
 	double stick0Y, stick1Y;
 	
 	Drive Left, Right, Climber, Intake, Agitator;
-	Shooter shoot;
+	Shooter Shoot;
 	
-	final String defaultAuto = "Default";
-	final String customAuto = "My Auto";
+	boolean blueSide;
+	
+	Autonomous auto;
 	
 	String autoSelected;
 	SendableChooser<String> chooser = new SendableChooser<>();
@@ -52,13 +57,10 @@ public class Robot extends IterativeRobot {
 		CANTalon[] intake = {CAN[4]};
 		Intake = new Drive(intake);
 		
-		shoot = new Shooter(CAN[5], CAN[6]);
+		Shoot = new Shooter(CAN[5], CAN[6], CAN[7]);
 		 
-		CANTalon[] climber = {CAN[7]};
+		CANTalon[] climber = {CAN[8]};
 		Climber = new Drive(climber);
-		
-		CANTalon[] agitator = {CAN[8]};
-		Agitator = new Drive(agitator);
 		
 		stick = new Joystick[3];
 		for (int i = 0; i < stick.length; i++)
@@ -66,9 +68,23 @@ public class Robot extends IterativeRobot {
 			stick[i] = new Joystick(i);
 		}
 		
-		chooser.addDefault("Default Auto", defaultAuto);
-		chooser.addObject("My Auto", customAuto);
+		enc = new Encoder[2];
+		for (int i = 0; i < enc.length; i+=2)
+		{
+			enc[i/2] = new Encoder(i, i + 1);
+		}
+		
+		chooser.addDefault("Drive to Line", "line");
+		chooser.addObject("Feeder Side", "feeder");
+		chooser.addObject("Airship Side", "airship");
+		chooser.addObject("Boiler Side", "boiler");
+		chooser.addObject("Shoot in Boiler", "shootBoiler");
+		
+		//SmartDashboard Values
 		SmartDashboard.putData("Auto choices", chooser);
+		SmartDashboard.putBoolean("BlueSide", false);
+		SmartDashboard.putNumber("ShooterVoltage", CAN[5].getOutputVoltage());
+		SmartDashboard.putNumber("ClimberVoltage", CAN[7].getOutputVoltage());
 	}
 
 	/**
@@ -84,6 +100,10 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void autonomousInit() {
+		blueSide = SmartDashboard.getBoolean("BlueSide", false);
+		
+		auto = new Autonomous(Left, Right, Shoot, blueSide, enc[0], enc[1]);
+		
 		autoSelected = chooser.getSelected();
 		// autoSelected = SmartDashboard.getString("Auto Selector",
 		// defaultAuto);
@@ -96,12 +116,26 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void autonomousPeriodic() {
 		switch (autoSelected) {
-		case customAuto:
-			// Put custom auto code here
+		
+		case "feeder":
+			auto.Feeder();
 			break;
-		case defaultAuto:
+			
+		case "airship":
+			auto.Airship();
+			break;
+			
+		case "boiler":
+			auto.Boiler();
+			break;
+			
+		case "shootBoiler":
+			auto.ShootInBoiler();
+			break;
+			
+		case "line":
 		default:
-			// Put default auto code here
+			auto.defaultGoToBaseLine();
 			break;
 		}
 	}
@@ -121,7 +155,7 @@ public class Robot extends IterativeRobot {
 		if(stick[2].getIsXbox())
 		{
 			//Shooter
-			shoot.Shoot(stick[2].getRawButton(0));
+			Shoot.Shoot(stick[2].getRawButton(0));
 			if(stick[2].getRawButton(0))
 				Agitator.drive(1);
 			

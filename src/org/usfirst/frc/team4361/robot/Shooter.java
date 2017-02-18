@@ -7,10 +7,13 @@ public class Shooter {
 
 	CANTalon Shooter;
 	CANTalon Indexer;
-	public Shooter(CANTalon Shooter, CANTalon Indexer)
+	CANTalon Agitator;
+	
+	public Shooter(CANTalon Shooter, CANTalon Indexer, CANTalon Agitator)
 	{
 		this.Shooter = Shooter;
 		this.Indexer = Indexer;
+		this.Agitator = Agitator;
 	}
 	
 	Boolean Start = true;
@@ -19,12 +22,13 @@ public class Shooter {
 	{
 		if(Button && time.get() >= 10)
 		{
-			Indexer.set(1);
+			Indexer.set(.3);
 			time.stop();
 			time.reset();
 		}
 		else if(Button && Start)
 		{
+			Agitator.set(-.5);
 			Shooter.set(-.65);
 			time.reset();
 			time.start();
@@ -34,6 +38,7 @@ public class Shooter {
 		{
 			Indexer.set(0);
 			Shooter.set(0);
+			Agitator.set(0);
 			
 			Start = true;
 		}

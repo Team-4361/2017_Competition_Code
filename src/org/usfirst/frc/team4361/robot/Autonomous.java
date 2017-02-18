@@ -26,8 +26,10 @@ public class Autonomous {
 	
 	TurnControl turn;
 	
+	boolean blueSide;
+	
 	//Constructers
-	public Autonomous(Drive left, Drive right, Shooter shoot)
+	public Autonomous(Drive left, Drive right, Shooter shoot, boolean blueSide)
 	{
 		diameter = 6 + 1/8;
 		circumference = diameter * Math.PI;
@@ -47,10 +49,12 @@ public class Autonomous {
 		this.shoot = shoot;
 		
 		navx = new AHRS(SerialPort.Port.kMXP);
+		
+		this.blueSide = blueSide;
 	}
-	public Autonomous(Drive left, Drive right, Shooter shoot, Encoder lEnc, Encoder rEnc)
+	public Autonomous(Drive left, Drive right, Shooter shoot, boolean blueSide, Encoder lEnc, Encoder rEnc)
 	{
-		this(left, right, shoot);
+		this(left, right, shoot, blueSide);
 		this.lEnc = lEnc;
 		this.rEnc = rEnc;
 		runNum = 0;
@@ -58,10 +62,42 @@ public class Autonomous {
 	
 	
 	//Different Autonomous Modes
-	public void defaultGoToObstacle()
+	public void defaultGoToBaseLine()
 	{
 		if(runNum == 0)
-			goDistance(54, .3);
+			goDistance(93.5, .3);
+	}
+	
+	public void Feeder()
+	{
+		if(runNum == 0)
+			goDistance(75.10132, .3);
+		if(runNum == 1)
+			turn(-120);
+		if(runNum == 2)
+			goDistance(-71.9735, .3);
+	}
+	
+	public void Airship()
+	{
+		if(runNum == 0)
+			goDistance(93.5, .3);
+	}
+	
+	public void Boiler()
+	{
+		if(runNum == 0)
+			goDistance(63.03447, .3);
+		if(runNum == 1)
+			turn(120);
+		if(runNum == 2)
+			goDistance(-95.93105, .3);
+	}
+	
+	public void ShootInBoiler()
+	{
+		if(runNum == 0)
+			goDistance(93.5, .3);
 	}
 	
 	
@@ -130,6 +166,8 @@ public class Autonomous {
 
 	private void turnEncoder(double angle)
 	{
+		if(blueSide) angle = -angle;
+		
 		double percent = Math.abs(angle)/360;
 		if(!hasRun)
 		{
@@ -168,6 +206,8 @@ public class Autonomous {
 	
 	private void turn(double angle)
 	{
+		if(blueSide) angle = -angle;
+		
 		double speed =turn.turnAngle(navx.getAngle(), angle);
    		left.drive(-speed);
 		right.drive(-speed);
