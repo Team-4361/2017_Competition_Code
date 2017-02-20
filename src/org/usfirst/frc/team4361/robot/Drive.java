@@ -2,6 +2,7 @@ package org.usfirst.frc.team4361.robot;
 import com.ctre.CANTalon;
 
 public class Drive {
+	
 	CANTalon[] CAN;
 	
 	public Drive(CANTalon[] CAN)

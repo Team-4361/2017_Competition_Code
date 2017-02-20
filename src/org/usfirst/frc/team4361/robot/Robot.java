@@ -51,18 +51,18 @@ public class Robot extends IterativeRobot {
 			CAN[i] = new CANTalon(i);
 		}
 		
-		CANTalon[] left = {CAN[0], CAN[1]};
+		CANTalon[] left = {CAN[0], CAN[3]};
 		Left = new Drive(left);
 	
-		CANTalon[] right = {CAN[2], CAN[3]};
+		CANTalon[] right = {CAN[7], CAN[8]};
 		Right = new Drive(right);
 		
-		CANTalon[] intake = {CAN[4]};
+		CANTalon[] intake = {CAN[6]};
 		Intake = new Drive(intake);
 		
-		Shoot = new Shooter(CAN[5], CAN[6], CAN[7]);
+		Shoot = new Shooter(CAN[1], CAN[2], CAN[4]);
 		 
-		CANTalon[] climber = {CAN[8]};
+		CANTalon[] climber = {CAN[5]};
 		Climber = new Drive(climber);
 		
 		stick = new Joystick[3];
@@ -179,19 +179,16 @@ public class Robot extends IterativeRobot {
 		
 		if(stick[1].getRawButton(3))
 		{
-			Left.drive(-rightInput);
-			Right.drive(rightInput);
+			leftInput = -rightInput;
 		}
 		else if(stick[1].getRawButton(4))
 		{
-			Left.drive(stick1X);
-			Right.drive(stick1X);
+			leftInput = stick1X;
+			rightInput = stick1X;
 		}
-		else
-		{
-			Left.drive(leftInput);
-			Right.drive(rightInput);
-		}
+		
+		Left.drive(leftInput);
+		Right.drive(rightInput);
 		
 		
 		//Climber

@@ -106,7 +106,7 @@ public class Autonomous {
 		if(runNum == 0)
 			goDistance(67.8642 - robotLength, .3);
 		if(runNum == 1)
-			turn(120);
+			turn(-46.24);
 		if(runNum == 2)
 			goDistance(84.46555 - robotLength, -.3);
 	}
