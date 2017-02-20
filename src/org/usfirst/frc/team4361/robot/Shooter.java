@@ -43,4 +43,20 @@ public class Shooter {
 			Start = true;
 		}
 	}
+	
+	public void Fix(boolean Button)
+	{
+		if(Button)
+		{
+			Indexer.set(-.3);
+			
+			Agitator.set(.3);
+		}
+		else
+		{
+			Indexer.set(0);
+			
+			Agitator.set(0);
+		}
+	}
 }

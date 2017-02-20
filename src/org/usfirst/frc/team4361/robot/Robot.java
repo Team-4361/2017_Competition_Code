@@ -199,12 +199,19 @@ public class Robot extends IterativeRobot {
 		
 		if(stick[2].getIsXbox())
 		{
-			//Shooter
-			Shoot.Shoot(stick[2].getRawButton(0));
-			
 			//Intake
 			if(stick[2].getRawButton(2))
 				Intake.drive(-1);
+			else
+				Intake.drive(0);
+			
+			//Auto Fixer
+			if(stick[2].getRawButton(4))
+				Intake.drive(.5);
+			Shoot.Fix(stick[2].getRawButton(4));
+
+			//Shooter
+			Shoot.Shoot(stick[2].getRawButton(0));
 		}
 		
 		//Smartdashboard Values
