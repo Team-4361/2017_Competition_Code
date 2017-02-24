@@ -6,6 +6,13 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Joystick;
 import com.ctre.CANTalon;
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.CameraServer;
+import edu.wpi.cscore.UsbCamera;
+import edu.wpi.cscore.CvSource;
+import edu.wpi.cscore.CvSink;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
+
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -27,7 +34,7 @@ public class Robot extends IterativeRobot {
 	Drive Left, Right, Climber, Intake, Agitator;
 	Shooter Shoot;
 	
-	boolean blueSide, gearing, gearChanged;
+	boolean blueSide, gearing, gearChanged, agitatorChange;
 	
 	Autonomous auto;
 	
@@ -41,7 +48,8 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void robotInit() 
 	{
-	
+		agitatorChange = false;
+		
 		gearing = false;
 		gearChanged = false;
 		
@@ -60,7 +68,7 @@ public class Robot extends IterativeRobot {
 		CANTalon[] intake = {CAN[6]};
 		Intake = new Drive(intake);
 		
-		Shoot = new Shooter(CAN[1], CAN[2], CAN[4]);
+		Shoot = new Shooter(CAN[1], CAN[2]);
 		 
 		CANTalon[] climber = {CAN[5]};
 		Climber = new Drive(climber);
@@ -72,10 +80,10 @@ public class Robot extends IterativeRobot {
 		}
 		
 		enc = new Encoder[2];
-		for (int i = 0; i < enc.length; i+=2)
-		{
-			enc[i/2] = new Encoder(i, i + 1);
-		}
+		enc[0] = new Encoder(1,2);
+		enc[1] = new Encoder(3,4);
+		
+		CameraSetup();
 		
 		chooser.addDefault("Drive to Line", "line");
 		chooser.addObject("Feeder Side", "feeder");
@@ -149,6 +157,19 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() 
 	{
+		if(stick[2].getRawButton(1) && agitatorChange)
+		{
+			if(CAN[4].get() < 0)
+				CAN[4].set(0);
+			else
+				CAN[4].set(-.85);
+			agitatorChange = false;
+		}
+		else if(!stick[2].getRawButton(1) && !agitatorChange)
+		{
+			agitatorChange = true;
+		}
+		
 		//Gearing Input
 		if(stick[1].getRawButton(2) && !gearChanged)
 		{
@@ -166,14 +187,14 @@ public class Robot extends IterativeRobot {
 		
 		if(gearing)
 		{
-			leftInput = stick0Y/2;
+			leftInput = -stick0Y/2;
 			rightInput = stick1Y/2;
 			
 			stick1X = stick1X/2;
 		}
 		else
 		{
-			leftInput = stick0Y;
+			leftInput = -stick0Y;
 			rightInput = stick1Y;
 		}
 		
@@ -194,29 +215,41 @@ public class Robot extends IterativeRobot {
 		//Climber
 		if(stick[0].getRawButton(3))
 			Climber.drive(.2);
-		if(stick[0].getRawButton(4))
+		else if(stick[0].getRawButton(4))
 			Climber.drive(.75);
+		else
+			Climber.drive(0);
 		
 		if(stick[2].getIsXbox())
 		{
-			//Intake
-			if(stick[2].getRawButton(2))
-				Intake.drive(-1);
-			else
-				Intake.drive(0);
-			
 			//Auto Fixer
-			if(stick[2].getRawButton(4))
-				Intake.drive(.5);
-			Shoot.Fix(stick[2].getRawButton(4));
-
-			//Shooter
-			Shoot.Shoot(stick[2].getRawButton(0));
+			if(stick[2].getRawButton(2))
+			{
+				Intake.drive(-.3);
+				CAN[4].set(.75);
+				agitatorChange = true;
+				Shoot.Fix(stick[2].getRawButton(2));
+				
+			}
+			else
+			{
+				//Intake
+				if(stick[2].getRawButton(5))
+					Intake.drive(.6);
+				else
+					Intake.drive(0);
+					
+	
+				//Shooter
+				Shoot.Shoot(stick[2].getRawButton(6));
+			}
 		}
 		
 		//Smartdashboard Values
-		SmartDashboard.putNumber("ShooterVoltage", CAN[5].getOutputVoltage());
-		SmartDashboard.putNumber("ClimberVoltage", CAN[7].getOutputVoltage());
+
+		SmartDashboard.putNumber("Agitator Current", CAN[4].getOutputCurrent());
+		SmartDashboard.putNumber("Shooter Current", CAN[1].getOutputCurrent());
+		SmartDashboard.putNumber("Climber Current", CAN[5].getOutputCurrent());
 		SmartDashboard.putBoolean("Gear", gearing);
 		
 	}
@@ -227,5 +260,49 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void testPeriodic() {
 	}
+	
+	public void CameraSetup()
+	{
+		CameraServer.getInstance().startAutomaticCapture("cam0", 0);
+		
+		
+		/*
+		CameraServer.getInstance().startAutomaticCapture(0);
+
+		new Thread(() -> {
+            UsbCamera camera0 = CameraServer.getInstance().startAutomaticCapture(0);
+
+            UsbCamera camera1 = CameraServer.getInstance().startAutomaticCapture(1);
+            
+            camera0.setResolution(160, 120);
+            
+            CvSink cvSink = CameraServer.getInstance().getVideo("cam0");
+            CvSource outputStream = CameraServer.getInstance().putVideo("Blur0", 160, 120);
+            
+            Mat source = new Mat();
+            Mat output = new Mat();
+            
+            camera1.setResolution(160, 120);
+            
+            CvSink cvSink1 = CameraServer.getInstance().getVideo("cam1");
+            CvSource outputStream1 = CameraServer.getInstance().putVideo("Blur1", 160, 120);
+            
+            Mat source1 = new Mat();
+            Mat output1 = new Mat();
+            
+            while(!Thread.interrupted()) {
+                cvSink.grabFrame(source);
+                //Imgproc.cvtColor(source, output, Imgproc.COLOR_BGR2GRAY);
+                outputStream.putFrame(output);
+                
+
+                //cvSink1.grabFrame(source1);
+                //Imgproc.cvtColor(source1, output1, Imgproc.COLOR_BGR2GRAY);
+                //outputStream1.putFrame(output1);
+            }
+        });//.start();
+		*/
+	}
+	
 }
 
