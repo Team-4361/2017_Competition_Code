@@ -247,7 +247,7 @@ public class Robot extends IterativeRobot {
 		
 		//Smartdashboard Values
 
-		SmartDashboard.putNumber("Agitator Current", CAN[4].getOutputCurrent());
+		//SmartDashboard.putNumber("Agitator Current", CAN[4].getOutputCurrent());
 		SmartDashboard.putNumber("Shooter Current", CAN[1].getOutputCurrent());
 		SmartDashboard.putNumber("Climber Current", CAN[5].getOutputCurrent());
 		SmartDashboard.putBoolean("Gear", gearing);
@@ -264,7 +264,7 @@ public class Robot extends IterativeRobot {
 	public void CameraSetup()
 	{
 		CameraServer.getInstance().startAutomaticCapture("cam0", 0);
-		
+		CameraServer.getInstance().startAutomaticCapture("cam1", 1);
 		
 		/*
 		CameraServer.getInstance().startAutomaticCapture(0);
