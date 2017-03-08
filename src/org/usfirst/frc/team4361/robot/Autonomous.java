@@ -9,11 +9,11 @@ public class Autonomous {
 
 	double diameter;
 	double circumference;
-	double distanceNeeded;
+	double distanceNeeded, large;
 	final double robotLength;
 	
 	boolean isEnc, hasRun;
-	int runNum, lEncNum, rEncNum, large;
+	int runNum, lEncNum, rEncNum;
 	Timer timer, timerSpeed, shotTime;
 	
 	Drive left, right;
@@ -37,7 +37,10 @@ public class Autonomous {
 		diameter = 6 + 1/8;
 		circumference = diameter * Math.PI;
 		
-		isEnc = false;
+		if(lEnc != null)
+			isEnc = true;
+		else
+			isEnc = false;
 		lEncNum = 0;
 		rEncNum = 0;
 		large = 0;
@@ -57,18 +60,29 @@ public class Autonomous {
 	}
 	public Autonomous(Drive left, Drive right, Shooter shoot, boolean redSide, Encoder lEnc, Encoder rEnc)
 	{
+		
 		this(left, right, shoot, redSide);
+		
+		diameter = 6 + 1/8;
+		circumference = diameter * Math.PI;
+		
+		lEnc.setDistancePerPulse(circumference);
+		rEnc.setDistancePerPulse(circumference);
+		
 		this.lEnc = lEnc;
 		this.rEnc = rEnc;
-		runNum = 0;
+
+		isEnc = true;
 	}
 	
 	
 	//Different Autonomous Modes
 	public void defaultGoToBaseLine()
 	{
+		System.out.println(lEnc.getRaw() + " : " + rEnc.getRaw() + " : " + lEnc.getEncodingScale() + " : " + rEnc.getEncodingScale() + " : " + lEnc.getRate());
+		
 		if(runNum == 0)
-			goDistance(94 - robotLength, .3);
+			goDistance(94 - robotLength, -.5);
 	}
 	
 	public void Feeder()
@@ -84,11 +98,7 @@ public class Autonomous {
 	public void Airship()
 	{
 		if(runNum == 0)
-			goDistance(50 - robotLength, .3);
-		if(runNum == 1)
-			turn(180);
-		if(runNum == 2)
-			goDistance(64.6985, -.3);
+			goDistance(114.6985- robotLength, -.3);
 	}
 	
 	public void Boiler()
@@ -119,6 +129,7 @@ public class Autonomous {
 		{
 			right.drive(-speed);
 			left.drive(speed);
+			System.out.println("Start");
 		}
 		
 		if(isEnc)
@@ -130,10 +141,15 @@ public class Autonomous {
 				hasRun = true;
 			}
 			
-			large = Math.abs(Math.max(lEnc.getRaw(), rEnc.getRaw()));
+			large = Math.abs(Math.max(lEnc.getDistance(), rEnc.getDistance()));
+			System.out.println(large + "");
 			
-			if(large*circumference>dist)
+			System.out.println("Middle");
+			
+			if(large>dist)
 			{
+				System.out.println("Stop");
+				
 				right.drive(0);
 				left.drive(0);
 				
@@ -200,9 +216,9 @@ public class Autonomous {
 		else if(!hasRun&&angle==0)
 			hasRun=true;
 		
-		large = Math.abs(Math.max(lEnc.getRaw(), rEnc.getRaw()));
+		large = Math.abs(Math.max(lEnc.getDistance(), rEnc.getDistance()));
 		double radius = ((30+1/4)*Math.PI);
-		if(large*circumference>=radius*percent)
+		if(large>=radius*percent)
 		{
 			right.drive(0);
 			left.drive(0);

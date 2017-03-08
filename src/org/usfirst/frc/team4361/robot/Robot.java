@@ -80,8 +80,8 @@ public class Robot extends IterativeRobot {
 		}
 		
 		enc = new Encoder[2];
-		enc[0] = new Encoder(1,2);
-		enc[1] = new Encoder(3,4);
+		enc[0] = new Encoder(1,2, false);
+		enc[1] = new Encoder(3,4, false);
 		
 		CameraSetup();
 		
@@ -157,6 +157,7 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void teleopPeriodic() 
 	{
+		
 		if(stick[2].getRawButton(1) && agitatorChange)
 		{
 			if(CAN[4].get() < 0)
@@ -273,6 +274,9 @@ public class Robot extends IterativeRobot {
             UsbCamera camera0 = CameraServer.getInstance().startAutomaticCapture(0);
 
             UsbCamera camera1 = CameraServer.getInstance().startAutomaticCapture(1);
+            
+            
+            
             
             camera0.setResolution(160, 120);
             
