@@ -66,8 +66,8 @@ public class Autonomous {
 		diameter = 6 + 1/8;
 		circumference = diameter * Math.PI;
 		
-		lEnc.setDistancePerPulse(circumference);
-		rEnc.setDistancePerPulse(circumference);
+		lEnc.setDistancePerPulse(1.0/360);
+		rEnc.setDistancePerPulse(1.0/360);
 		
 		this.lEnc = lEnc;
 		this.rEnc = rEnc;
@@ -79,7 +79,7 @@ public class Autonomous {
 	//Different Autonomous Modes
 	public void defaultGoToBaseLine()
 	{
-		System.out.println(lEnc.getRaw() + " : " + rEnc.getRaw() + " : " + lEnc.getEncodingScale() + " : " + rEnc.getEncodingScale() + " : " + lEnc.getRate());
+		//System.out.println(lEnc.getRaw() + " : " + rEnc.getRaw() + " : " + lEnc.getEncodingScale() + " : " + rEnc.getEncodingScale() + " : " + lEnc.getRate());
 		
 		if(runNum == 0)
 			goDistance(94 - robotLength, -.5);
@@ -129,7 +129,6 @@ public class Autonomous {
 		{
 			right.drive(-speed);
 			left.drive(speed);
-			System.out.println("Start");
 		}
 		
 		if(isEnc)
@@ -142,11 +141,8 @@ public class Autonomous {
 			}
 			
 			large = Math.abs(Math.max(lEnc.getDistance(), rEnc.getDistance()));
-			System.out.println(large + "");
 			
-			System.out.println("Middle");
-			
-			if(large>dist)
+			if(large * circumference > dist)
 			{
 				System.out.println("Stop");
 				

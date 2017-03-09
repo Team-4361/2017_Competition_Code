@@ -6,12 +6,16 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Joystick;
 import com.ctre.CANTalon;
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.GenericHID.Hand;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.cscore.CvSource;
 import edu.wpi.cscore.CvSink;
 import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.Relay;
 
 
 /**
@@ -22,6 +26,10 @@ import org.opencv.imgproc.Imgproc;
  * directory.
  */
 public class Robot extends IterativeRobot {
+	
+	DigitalInput[] limit;
+	
+	Relay[] relay;
 	
 	CANTalon[] CAN;
 	Joystick[] stick;
@@ -48,6 +56,18 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void robotInit() 
 	{
+		limit = new DigitalInput[0];
+		for(int i = 0; i < limit.length; i++)
+		{
+			limit[i] = new DigitalInput(i);
+		}
+		
+		relay = new Relay[0];
+		for(int i = 0; i < relay.length; i++)
+		{
+			relay[i] = new Relay(i);
+		}
+		
 		agitatorChange = false;
 		
 		gearing = false;
@@ -171,20 +191,77 @@ public class Robot extends IterativeRobot {
 			agitatorChange = true;
 		}
 		
-		//Gearing Input
-		if(stick[1].getRawButton(2) && !gearChanged)
+		boolean climber1, climber2;
+		boolean perfectStraight, perfectTurn;
+		
+		//Inputs from joystick and Main Xbox Controller
+		if(stick[0].getIsXbox())
 		{
-			gearing = !gearing;
-			gearChanged = true;
+			//Gearing Input
+			if(stick[0].getRawButton(1) && !gearChanged)
+			{
+				gearing = !gearing;
+				gearChanged = true;
+			}
+			if(!stick[0].getRawButton(1) && gearChanged)
+			{
+				gearChanged = false;
+			}
+			
+			
+			perfectStraight = stick[0].getRawAxis(3) != 0;
+			perfectTurn = stick[0].getRawAxis(2) != 0;
+			
+
+			stick0Y = stick[0].getRawAxis(1);
+			stick1Y = stick[0].getRawAxis(5);
+			stick1X = stick[0].getRawAxis(4);
+			
+			
+			//Climbing
+			climber1 = stick[0].getRawButton(5);
+			climber2 = stick[0].getRawButton(6);
+			
+			if(stick[0].getRawButton(2))
+			{
+				stick[0].setRumble(RumbleType.kLeftRumble, 1);
+				stick[0].setRumble(RumbleType.kRightRumble, 1);
+			}
+			else
+			{
+				stick[0].setRumble(RumbleType.kLeftRumble, 0);
+				stick[0].setRumble(RumbleType.kRightRumble, 0);
+			}
 		}
-		if(!stick[1].getRawButton(2) && gearChanged)
+		else
 		{
-			gearChanged = false;
+			//Gearing Input
+			if(stick[1].getRawButton(2) && !gearChanged)
+			{
+				gearing = !gearing;
+				gearChanged = true;
+			}
+			if(!stick[1].getRawButton(2) && gearChanged)
+			{
+				gearChanged = false;
+			}
+			
+			
+			perfectStraight = stick[1].getRawButton(3);
+			perfectTurn = stick[1].getRawButton(4);
+			
+
+			stick0Y = stick[0].getY();
+			stick1Y = stick[1].getY();
+			stick1X = stick[1].getX();
+			
+			
+			//Climbing
+			climber1 = stick[0].getRawButton(3);
+			climber2 = stick[0].getRawButton(4);
 		}
 		
-		stick0Y = stick[0].getY();
-		stick1Y = stick[1].getY();
-		stick1X = stick[1].getX();
+		
 		
 		if(gearing)
 		{
@@ -199,11 +276,11 @@ public class Robot extends IterativeRobot {
 			rightInput = stick1Y;
 		}
 		
-		if(stick[1].getRawButton(3))
+		if(perfectStraight)
 		{
 			leftInput = -rightInput;
 		}
-		else if(stick[1].getRawButton(4))
+		else if(perfectTurn)
 		{
 			leftInput = stick1X;
 			rightInput = stick1X;
@@ -214,10 +291,10 @@ public class Robot extends IterativeRobot {
 		
 		
 		//Climber
-		if(stick[0].getRawButton(3))
+		if(climber1)
 			Climber.drive(.2);
-		else if(stick[0].getRawButton(4))
-			Climber.drive(.75);
+		else if(climber2)
+			Climber.drive(1);
 		else
 			Climber.drive(0);
 		
