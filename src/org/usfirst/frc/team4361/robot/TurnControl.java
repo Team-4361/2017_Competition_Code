@@ -38,9 +38,9 @@ public class TurnControl {
 		ratio = (angle-target)/target;
 		
 		//print statements for testing
-		System.out.print("Cal is " + Cal+ " ");
-		System.out.print("angle is "+ angle + " ");
-		System.out.print("ratio is " + ratio + " ");
+		System.out.println("Cal is " + Cal+ " ");
+		System.out.println("angle is "+ angle + " ");
+		System.out.println("ratio is " + ratio + " ");
 		
 		//set ratio and ensure speed is between .15 and .65		
 		if(Math.abs(ratio)<.08)

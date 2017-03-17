@@ -35,7 +35,7 @@ public class Robot extends IterativeRobot {
 	Joystick[] stick;
 	
 	Encoder[] enc;
-	
+
 	
 	double stick0Y, stick1Y, stick1X, leftInput, rightInput;
 	
@@ -56,11 +56,8 @@ public class Robot extends IterativeRobot {
 	@Override
 	public void robotInit() 
 	{
-		limit = new DigitalInput[0];
-		for(int i = 0; i < limit.length; i++)
-		{
-			limit[i] = new DigitalInput(i);
-		}
+		limit = new DigitalInput[1];
+		limit[0] = new DigitalInput(9);
 		
 		relay = new Relay[0];
 		for(int i = 0; i < relay.length; i++)
@@ -101,7 +98,10 @@ public class Robot extends IterativeRobot {
 		
 		enc = new Encoder[2];
 		enc[0] = new Encoder(1,2, false);
+		enc[0].setDistancePerPulse(1.0/250.2);
+		
 		enc[1] = new Encoder(3,4, false);
+		enc[1].setDistancePerPulse(1.0/250.2);
 		
 		CameraSetup();
 		
@@ -116,6 +116,7 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putBoolean("BlueSide", false);
 		SmartDashboard.putNumber("ShooterVoltage", CAN[5].getOutputVoltage());
 		SmartDashboard.putNumber("ClimberVoltage", CAN[7].getOutputVoltage());
+		SmartDashboard.putBoolean("Switched", false);
 	}
 
 	/**
@@ -219,7 +220,7 @@ public class Robot extends IterativeRobot {
 			
 			
 			//Climbing
-			climber1 = stick[0].getRawButton(5);
+			climber1 = stick[0].getRawButton(3);
 			climber2 = stick[0].getRawButton(6);
 			
 			if(stick[0].getRawButton(2))
@@ -286,6 +287,13 @@ public class Robot extends IterativeRobot {
 			rightInput = stick1X;
 		}
 		
+		if(SmartDashboard.getBoolean("Switched", false))
+		{
+			double tempSwitch = rightInput;
+			rightInput = leftInput;
+			leftInput = tempSwitch;
+		}
+		
 		Left.drive(leftInput);
 		Right.drive(rightInput);
 		
@@ -321,14 +329,26 @@ public class Robot extends IterativeRobot {
 				//Shooter
 				Shoot.Shoot(stick[2].getRawButton(6));
 			}
+			
+			if(stick[2].getRawButton(3))
+			{
+				stick[2].setRumble(RumbleType.kLeftRumble, 1);
+				stick[2].setRumble(RumbleType.kRightRumble, 1);
+			}
+			else
+			{
+				stick[2].setRumble(RumbleType.kLeftRumble, 0);
+				stick[2].setRumble(RumbleType.kRightRumble, 0);
+			}
 		}
 		
 		//Smartdashboard Values
 
-		//SmartDashboard.putNumber("Agitator Current", CAN[4].getOutputCurrent());
+		SmartDashboard.putNumber("Agitator Current", CAN[4].getOutputCurrent());
 		SmartDashboard.putNumber("Shooter Current", CAN[1].getOutputCurrent());
 		SmartDashboard.putNumber("Climber Current", CAN[5].getOutputCurrent());
 		SmartDashboard.putBoolean("Gear", gearing);
+		SmartDashboard.putBoolean("GearIn", !limit[0].get());
 		
 	}
 

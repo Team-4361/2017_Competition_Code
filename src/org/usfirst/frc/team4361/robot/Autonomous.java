@@ -66,8 +66,6 @@ public class Autonomous {
 		diameter = 6 + 1/8;
 		circumference = diameter * Math.PI;
 		
-		lEnc.setDistancePerPulse(1.0/360);
-		rEnc.setDistancePerPulse(1.0/360);
 		
 		this.lEnc = lEnc;
 		this.rEnc = rEnc;
@@ -79,18 +77,17 @@ public class Autonomous {
 	//Different Autonomous Modes
 	public void defaultGoToBaseLine()
 	{
-		//System.out.println(lEnc.getRaw() + " : " + rEnc.getRaw() + " : " + lEnc.getEncodingScale() + " : " + rEnc.getEncodingScale() + " : " + lEnc.getRate());
-		
+		//turn = new TurnControl(navx.getAngle());
 		if(runNum == 0)
-			goDistance(94 - robotLength, -.5);
+			goDistance(94 - robotLength, -.2);
 	}
 	
 	public void Feeder()
 	{
 		if(runNum == 0)
-			goDistance(108.39373 - robotLength, .3);
+			goDistance(108.39373 - robotLength, -.3);
 		if(runNum == 1)
-			turn(-120);
+			turnEncoder(-0);
 		if(runNum == 2)
 			goDistance(46.79856 - robotLength, -.3);
 	}
@@ -99,14 +96,17 @@ public class Autonomous {
 	{
 		if(runNum == 0)
 			goDistance(114.6985- robotLength, -.3);
+		if(runNum == 1)
+			goDistance(2, .3);
+		
 	}
 	
 	public void Boiler()
 	{
 		if(runNum == 0)
-			goDistance(89.09147 - robotLength, .3);
+			goDistance(89.09147 - robotLength, -.3);
 		if(runNum == 1)
-			turn(120);
+			turnEncoder(60);
 		if(runNum == 2)
 			goDistance(85.30307 + robotLength, -.3);
 	}
@@ -116,7 +116,7 @@ public class Autonomous {
 		if(runNum == 0)
 			goDistance(67.8642 - robotLength, .3);
 		if(runNum == 1)
-			turn(-46.24);
+			turnEncoder(-46.24);
 		if(runNum == 2)
 			goDistance(84.46555 - robotLength, -.3);
 	}
@@ -125,10 +125,15 @@ public class Autonomous {
 	//Autonomous Commands
 	private void goDistance(double dist, double speed)
 	{
+
+		double timeWarm = .5;
+		double timeNeeded = timeWarm + ((dist / circumference) / ((speed * 5310) / (60 * 12.75)));
+		
 		if(!hasRun)
 		{
 			right.drive(-speed);
 			left.drive(speed);
+			timer.start();
 		}
 		
 		if(isEnc)
@@ -140,9 +145,9 @@ public class Autonomous {
 				hasRun = true;
 			}
 			
-			large = Math.abs(Math.max(lEnc.getDistance(), rEnc.getDistance()));
+			large = Math.max(Math.abs(lEnc.getDistance()), Math.abs(rEnc.getDistance()));
 			
-			if(large * circumference > dist)
+			if(large * circumference > dist || timer.get() - 7 > timeNeeded)
 			{
 				System.out.println("Stop");
 				
@@ -160,9 +165,8 @@ public class Autonomous {
 		//For when the encoders break
 		else if(!isEnc)
 		{
-			double timeWarm = .5;
 			int dist2 = 0;
-			double timeNeeded = timeWarm + ((dist / circumference) / ((speed * 5310) / (60 * 12.75)));
+			
 			if(!hasRun)
 			{
 				timer.start();
@@ -212,9 +216,9 @@ public class Autonomous {
 		else if(!hasRun&&angle==0)
 			hasRun=true;
 		
-		large = Math.abs(Math.max(lEnc.getDistance(), rEnc.getDistance()));
-		double radius = ((30+1/4)*Math.PI);
-		if(large>=radius*percent)
+		large = Math.max(Math.abs(lEnc.getDistance()), Math.abs(rEnc.getDistance()));
+		
+		if(large*circumference >= (19.5*Math.PI)*percent)
 		{
 			right.drive(0);
 			left.drive(0);
@@ -231,15 +235,18 @@ public class Autonomous {
 	{
 		if(redSide) angle = -angle;
 		
-		double speed =turn.turnAngle(navx.getAngle(), angle);
-   		left.drive(-speed);
-		right.drive(-speed);
+		
+		System.out.println("Current is " + navx.getAngle());
+		
+		double speed = turn.turnAngle(navx.getAngle(), angle);
+		System.out.println(speed);
+   		//left.drive(speed);
+		//right.drive(speed);
 		if(speed==0)
 		{
-			if(runNum>=0)
-				runNum++;
-			else
-				runNum--;
+			System.out.println("Done");
+			
+			runNum++;
 		}
 	}
 
