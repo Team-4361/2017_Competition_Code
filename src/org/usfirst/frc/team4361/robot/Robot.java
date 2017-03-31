@@ -16,6 +16,7 @@ import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Relay;
+import edu.wpi.first.wpilibj.Servo;
 
 
 /**
@@ -36,15 +37,20 @@ public class Robot extends IterativeRobot {
 	
 	Encoder[] enc;
 
+	Servo[] Doors;
 	
 	double stick0Y, stick1Y, stick1X, leftInput, rightInput;
 	
 	Drive Left, Right, Climber, Intake, Agitator;
 	Shooter Shoot;
 	
-	boolean blueSide, gearing, gearChanged, agitatorChange;
+	boolean blueSide, gearing, gearChanged, agitatorChange, gearPosition, gearChangingState, hasPushed;
 	
 	Autonomous auto;
+	
+	Pusher push;
+	
+	GearHolder holder;
 	
 	String autoSelected;
 	SendableChooser<String> chooser = new SendableChooser<>();
@@ -65,12 +71,20 @@ public class Robot extends IterativeRobot {
 			relay[i] = new Relay(i);
 		}
 		
+		Doors = new Servo[2];
+		for(int i = 0; i < Doors.length; i++)
+		{
+			Doors[i] = new Servo(i);
+		}
+		
 		agitatorChange = false;
 		
 		gearing = false;
 		gearChanged = false;
 		
-		CAN = new CANTalon[9];
+		
+		
+		CAN = new CANTalon[10];
 		for (int i = 0; i < CAN.length; i++)
 		{
 			CAN[i] = new CANTalon(i);
@@ -95,6 +109,10 @@ public class Robot extends IterativeRobot {
 		{
 			stick[i] = new Joystick(i);
 		}
+		
+		push = new Pusher(CAN[9], limit[0]);
+		
+		holder = new GearHolder(Doors, push);
 		
 		enc = new Encoder[2];
 		enc[0] = new Encoder(1,2, false);
@@ -132,9 +150,15 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void autonomousInit() {
+		if(holder.gearPosition)
+		{
+			holder.ChangePosition(true);
+			holder.ChangePosition(false);
+		}
+		
 		blueSide = SmartDashboard.getBoolean("BlueSide", false);
 		
-		auto = new Autonomous(Left, Right, Shoot, blueSide, enc[0], enc[1]);
+		auto = new Autonomous(Left, Right, Shoot, holder, blueSide, enc[0], enc[1]);
 		
 		autoSelected = chooser.getSelected();
 		// autoSelected = SmartDashboard.getString("Auto Selector",
@@ -248,6 +272,11 @@ public class Robot extends IterativeRobot {
 			}
 			
 			
+			//Changing Gear State
+			holder.ChangePosition(stick[1].getRawButton(1));
+			
+			
+			
 			perfectStraight = stick[1].getRawButton(3);
 			perfectTurn = stick[1].getRawButton(4);
 			
@@ -311,7 +340,7 @@ public class Robot extends IterativeRobot {
 			//Auto Fixer
 			if(stick[2].getRawButton(2))
 			{
-				Intake.drive(-.3);
+				Intake.drive(-.01);
 				CAN[4].set(.75);
 				agitatorChange = true;
 				Shoot.Fix(stick[2].getRawButton(2));
@@ -321,7 +350,7 @@ public class Robot extends IterativeRobot {
 			{
 				//Intake
 				if(stick[2].getRawButton(5))
-					Intake.drive(.6);
+					Intake.drive(.5);
 				else
 					Intake.drive(0);
 					
@@ -343,12 +372,19 @@ public class Robot extends IterativeRobot {
 		}
 		
 		//Smartdashboard Values
-
-		SmartDashboard.putNumber("Agitator Current", CAN[4].getOutputCurrent());
-		SmartDashboard.putNumber("Shooter Current", CAN[1].getOutputCurrent());
-		SmartDashboard.putNumber("Climber Current", CAN[5].getOutputCurrent());
-		SmartDashboard.putBoolean("Gear", gearing);
-		SmartDashboard.putBoolean("GearIn", !limit[0].get());
+/*
+		try
+		{
+			SmartDashboard.putNumber("Agitator Current", CAN[4].getOutputCurrent());
+			SmartDashboard.putNumber("Shooter Current", CAN[1].getOutputCurrent());
+			SmartDashboard.putNumber("Climber Current", CAN[5].getOutputCurrent());
+			SmartDashboard.putBoolean("Gear", gearing);
+			//SmartDashboard.putBoolean("GearIn", !limit[0].get());
+		}
+		catch (Exception e)
+		{
+			//System.out.println("Smartdashboard: " + e.getMessage());
+		}*/
 		
 	}
 
@@ -361,8 +397,15 @@ public class Robot extends IterativeRobot {
 	
 	public void CameraSetup()
 	{
-		CameraServer.getInstance().startAutomaticCapture("cam0", 0);
-		CameraServer.getInstance().startAutomaticCapture("cam1", 1);
+		try 
+		{
+			CameraServer.getInstance().startAutomaticCapture("cam0", 0);
+			CameraServer.getInstance().startAutomaticCapture("cam1", 1);
+		}
+		catch (Exception e)
+		{
+			System.out.println("Camera Error: " + e.getMessage());
+		}
 		
 		/*
 		CameraServer.getInstance().startAutomaticCapture(0);

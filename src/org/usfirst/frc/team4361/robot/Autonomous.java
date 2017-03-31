@@ -9,7 +9,7 @@ public class Autonomous {
 
 	double diameter;
 	double circumference;
-	double distanceNeeded, large;
+	double distanceNeeded, large, StartAngle;
 	final double robotLength;
 	
 	boolean isEnc, hasRun;
@@ -29,13 +29,16 @@ public class Autonomous {
 	
 	boolean redSide;
 	
+	GearHolder holder;
+	
 	//Constructers
-	public Autonomous(Drive left, Drive right, Shooter shoot, boolean redSide)
+	public Autonomous(Drive left, Drive right, Shooter shoot, GearHolder holder, boolean redSide)
 	{
 		robotLength = 35.5;
 		
 		diameter = 6 + 1/8;
 		circumference = diameter * Math.PI;
+		StartAngle = 0;
 		
 		if(lEnc != null)
 			isEnc = true;
@@ -58,10 +61,10 @@ public class Autonomous {
 		
 		this.redSide = redSide;
 	}
-	public Autonomous(Drive left, Drive right, Shooter shoot, boolean redSide, Encoder lEnc, Encoder rEnc)
+	public Autonomous(Drive left, Drive right, Shooter shoot, GearHolder holder, boolean redSide, Encoder lEnc, Encoder rEnc)
 	{
 		
-		this(left, right, shoot, redSide);
+		this(left, right, shoot, holder, redSide);
 		
 		diameter = 6 + 1/8;
 		circumference = diameter * Math.PI;
@@ -79,7 +82,8 @@ public class Autonomous {
 	{
 		//turn = new TurnControl(navx.getAngle());
 		if(runNum == 0)
-			goDistance(94 - robotLength, -.2);
+			turnNavx(90);
+			//goDistance(94 - robotLength, -.2);
 	}
 	
 	public void Feeder()
@@ -249,7 +253,43 @@ public class Autonomous {
 			runNum++;
 		}
 	}
-
+	
+	private void turnNavx(double angle)
+	{
+		if(redSide) angle = -angle;
+		
+		if(!hasRun)
+		{
+			StartAngle = navx.getAngle();
+		}
+		if(!hasRun&&angle<0)
+		{
+			right.drive(.3);
+			left.drive(.3);
+			hasRun = true;
+		}
+		else if(!hasRun&&angle>0)
+		{
+			right.drive(-.3);
+			left.drive(-.3);
+			hasRun = true;
+		}
+		else if(!hasRun&&angle==0)
+			hasRun=true;
+		
+		if(Math.abs(StartAngle - navx.getAngle()) >= Math.abs(angle))
+		{
+			right.drive(0);
+			left.drive(0);
+			
+			hasRun = false;
+			if(runNum>=0)
+				runNum++;
+			else
+				runNum--;
+		}
+	}
+	
 	private void wait(double time)
 	{
 		if(!hasRun)
@@ -267,5 +307,10 @@ public class Autonomous {
 			else
 				runNum--;
 		}
+	}
+
+	private void PushGear()
+	{
+		
 	}
 }
