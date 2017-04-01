@@ -31,9 +31,8 @@ public class Pusher {
 			delayTimer.start();
 
 			delay = false;
-			System.out.println("start");
 		}
-		if(delayTimer.get() > .1)
+		if(delayTimer.get() > .1 && delay == false)
 		{
 			delayTimer.stop();
 			delayTimer.reset();
@@ -43,7 +42,6 @@ public class Pusher {
 		
 		if(start)
 		{
-			System.out.println("move");
 			CAN.set(speed);
 			
 			start = false;
@@ -51,11 +49,9 @@ public class Pusher {
 			timer.reset();
 			timer.start();
 		}
-		double currentTime = this.timer.get();
-		if(currentTime != 0 && currentTime > time)
+		
+		if(timer.get() > time && !start)
 		{
-
-			System.out.println("Stop");
 			CAN.set(0);
 			
 			start = false;

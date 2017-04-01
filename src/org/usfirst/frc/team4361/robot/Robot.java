@@ -355,10 +355,10 @@ public class Robot extends IterativeRobot {
 			{
 				//Intake
 				if(stick[2].getRawButton(5))
-					Intake.drive(.5);
+					Intake.drive(.7);
 				else
 					Intake.drive(0);
-					
+				
 	
 				//Shooter
 				Shoot.Shoot(stick[2].getRawButton(6));
@@ -386,6 +386,7 @@ public class Robot extends IterativeRobot {
 			SmartDashboard.putBoolean("Gear", gearing);
 			//SmartDashboard.putBoolean("GearIn", !limit[0].get());
 			//SmartDashboard.putNumber("Pusher Current", CAN[9].getOutputCurrent());
+			SmartDashboard.putBoolean("Gear Position", !holder.gearPosition);
 		}
 		catch (Exception e)
 		{

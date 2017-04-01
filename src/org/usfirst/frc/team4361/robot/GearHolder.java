@@ -62,7 +62,7 @@ public class GearHolder {
 			if(!hasPushed)
 			{
 				//Pusher pushes
-				if(push.move(-.5, 2))
+				if(push.move(-.6, .2))
 				{
 					hasPushed = true;
 				}
