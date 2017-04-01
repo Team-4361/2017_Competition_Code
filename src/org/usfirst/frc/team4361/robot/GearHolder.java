@@ -64,6 +64,7 @@ public class GearHolder {
 				//Pusher pushes
 				if(push.move(-.6, .2))
 				{
+					System.out.println("Has Pushed");
 					hasPushed = true;
 				}
 			}

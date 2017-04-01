@@ -34,6 +34,8 @@ public class Pusher {
 		}
 		if(delayTimer.get() > .1 && delay == false)
 		{
+			System.out.println("Delay End");
+			
 			delayTimer.stop();
 			delayTimer.reset();
 			
@@ -42,6 +44,8 @@ public class Pusher {
 		
 		if(start)
 		{
+			System.out.println("Start Push");
+			
 			CAN.set(speed);
 			
 			start = false;
@@ -52,6 +56,8 @@ public class Pusher {
 		
 		if(timer.get() > time && !start)
 		{
+			System.out.println("Stop Push");
+			
 			CAN.set(0);
 			
 			start = false;
