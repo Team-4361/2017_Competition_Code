@@ -126,6 +126,7 @@ public class Robot extends IterativeRobot {
 		chooser.addDefault("Drive to Line", "line");
 		chooser.addObject("Feeder Side", "feeder");
 		chooser.addObject("Airship Side", "airship");
+		chooser.addObject("Airship Drop", "airshipDrop");
 		chooser.addObject("Boiler Side", "boiler");
 		chooser.addObject("Shoot in Boiler", "shootBoiler");
 		
@@ -179,6 +180,10 @@ public class Robot extends IterativeRobot {
 			
 		case "airship":
 			auto.Airship();
+			break;
+			
+		case "airshipDrop":
+			auto.AirshipDrop();
 			break;
 			
 		case "boiler":
@@ -372,7 +377,7 @@ public class Robot extends IterativeRobot {
 		}
 		
 		//Smartdashboard Values
-/*
+
 		try
 		{
 			SmartDashboard.putNumber("Agitator Current", CAN[4].getOutputCurrent());
@@ -380,11 +385,12 @@ public class Robot extends IterativeRobot {
 			SmartDashboard.putNumber("Climber Current", CAN[5].getOutputCurrent());
 			SmartDashboard.putBoolean("Gear", gearing);
 			//SmartDashboard.putBoolean("GearIn", !limit[0].get());
+			//SmartDashboard.putNumber("Pusher Current", CAN[9].getOutputCurrent());
 		}
 		catch (Exception e)
 		{
 			//System.out.println("Smartdashboard: " + e.getMessage());
-		}*/
+		}
 		
 	}
 

@@ -27,13 +27,17 @@ public class Pusher {
 	public boolean move(double speed, double time)
 	{
 		if(delay)
+		{
 			delayTimer.start();
+
+			delay = false;
+			System.out.println("start");
+		}
 		if(delayTimer.get() > .1)
 		{
 			delayTimer.stop();
 			delayTimer.reset();
 			
-			delay = false;
 			start = true;
 		}
 		

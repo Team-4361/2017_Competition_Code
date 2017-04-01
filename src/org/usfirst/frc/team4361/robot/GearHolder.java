@@ -17,7 +17,7 @@ public class GearHolder {
 		this.push = push;
 
 		gearPosition = false;
-		gearChangingState = false;
+		gearChangingState = true;
 
 		hasPushed = false;
 	}
@@ -30,7 +30,7 @@ public class GearHolder {
 			
 			gearChangingState = false;
 			
-			push.stop();
+			//push.stop();
 		}
 		
 		if(!input && !gearChangingState)
@@ -62,7 +62,7 @@ public class GearHolder {
 			if(!hasPushed)
 			{
 				//Pusher pushes
-				if(push.move(-.4, .3))
+				if(push.move(-.5, 2))
 				{
 					hasPushed = true;
 				}

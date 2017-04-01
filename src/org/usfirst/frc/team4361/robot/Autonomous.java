@@ -14,7 +14,7 @@ public class Autonomous {
 	
 	boolean isEnc, hasRun;
 	int runNum, lEncNum, rEncNum;
-	Timer timer, timerSpeed, shotTime;
+	Timer timer, timerSpeed, shotTime, GearTimer;
 	
 	Drive left, right;
 	Shooter shoot;
@@ -52,6 +52,7 @@ public class Autonomous {
 		timer = new Timer();
 		shotTime = new Timer();
 		timerSpeed = new Timer();
+		GearTimer = new Timer();
 		
 		this.left = left;
 		this.right = right;
@@ -82,19 +83,36 @@ public class Autonomous {
 	{
 		//turn = new TurnControl(navx.getAngle());
 		if(runNum == 0)
-			turnNavx(90);
-			//goDistance(94 - robotLength, -.2);
+			//turnNavx(90);
+			goDistance(94 - robotLength, -.4);
 	}
 	
 	public void Feeder()
 	{
 		if(runNum == 0)
-			goDistance(108.39373 - robotLength, -.3);
+			goDistance(108.39373 - robotLength, -.5);
 		if(runNum == 1)
-			turnEncoder(-0);
+			turnEncoder(-60);
 		if(runNum == 2)
-			goDistance(46.79856 - robotLength, -.3);
+			goDistance(46.79856 - robotLength, -.5);
 	}
+
+	public void FeederDrop()
+	{
+		if(runNum == 0)
+			goDistance(108.39373 - robotLength, -.5);
+		if(runNum == 1)
+			turnEncoder(-60);
+		if(runNum == 2)
+			goDistance(46.79856 - robotLength, -.5);
+		if(runNum == 3)
+			ChangeGear();
+		if(runNum == 4)
+			goDistance(6, .3);
+		if(runNum == 3)
+			ChangeGear();
+	}
+	
 	
 	public void Airship()
 	{
@@ -104,16 +122,45 @@ public class Autonomous {
 			goDistance(2, .3);
 		
 	}
+
+	public void AirshipDrop()
+	{
+		if(runNum == 0)
+			goDistance(114.6985- robotLength, -.5);
+		if(runNum == 1)
+			ChangeGear();
+		if(runNum == 2)
+			goDistance(6, .3);
+		if(runNum == 3)
+			ChangeGear();
+	}
 	
 	public void Boiler()
 	{
 		if(runNum == 0)
-			goDistance(89.09147 - robotLength, -.3);
+			goDistance(89.09147 - robotLength, -.5);
 		if(runNum == 1)
 			turnEncoder(60);
 		if(runNum == 2)
-			goDistance(85.30307 + robotLength, -.3);
+			goDistance(85.30307 + robotLength, -.5);
 	}
+	
+	public void BoilerDrop()
+	{
+		if(runNum == 0)
+			goDistance(89.09147 - robotLength, -.5);
+		if(runNum == 1)
+			turnEncoder(60);
+		if(runNum == 2)
+			goDistance(85.30307 + robotLength, -.5);
+		if(runNum == 3)
+			ChangeGear();
+		if(runNum == 4)
+			goDistance(6, .3);
+		if(runNum == 5)
+			ChangeGear();
+	}
+	
 	
 	public void ShootInBoiler()
 	{
@@ -309,8 +356,27 @@ public class Autonomous {
 		}
 	}
 
-	private void PushGear()
+	private void ChangeGear()
 	{
+		holder.ChangePosition(true);
+		holder.ChangePosition(false);
+		
+		if(!hasRun)
+		{
+			timer.start();
+
+			hasRun = true;
+		}
+		
+		
+		if(timer.get() > .3)
+		{
+			hasRun = false;
+			if(runNum>=0)
+				runNum++;
+			else
+				runNum--;
+		}
 		
 	}
 }
