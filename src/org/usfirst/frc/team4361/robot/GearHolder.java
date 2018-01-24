@@ -1,6 +1,6 @@
 package org.usfirst.frc.team4361.robot;
 
-import edu.wpi.first.wpilibj.Servo;
+import edu.wpi.first.wpilibj.*;
 
 public class GearHolder {
 	
@@ -10,6 +10,7 @@ public class GearHolder {
 	
 	private boolean gearChangingState, hasPushed;
 	public boolean gearPosition;
+	private Timer resetTimer;
 	
 	public GearHolder(Servo[] Doors, Pusher push)
 	{
@@ -20,6 +21,8 @@ public class GearHolder {
 		gearChangingState = true;
 
 		hasPushed = false;
+		
+		resetTimer = new Timer();
 	}
 	
 	public void ChangePosition(boolean input)
@@ -38,13 +41,33 @@ public class GearHolder {
 			gearChangingState = true;
 		}
 		
+		//Automatic reset for Gear Holder
+		if(gearPosition && resetTimer.get() == 0)
+		{
+			resetTimer.start();
+		}
+		
+		if(gearPosition && resetTimer.get() > 7)
+		{
+			gearPosition = false;
+			
+			resetTimer.stop();
+			resetTimer.reset();
+		}
+		
+		if(!input && !gearPosition)
+		{
+			resetTimer.stop();
+			resetTimer.reset();
+		}
+		
 		
 		//Gear pusher and Gear door Controls
 		if(!gearPosition)
 		{
 			//Doors Close
-			Doors[0].set(.9);
-			Doors[1].set(.05);
+			Doors[0].set(.85);
+			Doors[1].set(.1);
 			
 			//Pusher pushes
 			push.startPosition();
@@ -55,16 +78,15 @@ public class GearHolder {
 		if(gearPosition)
 		{
 			//Doors Open
-			Doors[0].set(.7);
+			Doors[0].set(.35);
 			Doors[1].set(.24);
 			
 			
 			if(!hasPushed)
 			{
 				//Pusher pushes
-				if(push.move(-.6, .2))
+				if(push.move(-.55, .1))
 				{
-					System.out.println("Has Pushed");
 					hasPushed = true;
 				}
 			}

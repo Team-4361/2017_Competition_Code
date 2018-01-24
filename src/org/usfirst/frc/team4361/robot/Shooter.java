@@ -1,14 +1,14 @@
 package org.usfirst.frc.team4361.robot;
 
-import com.ctre.CANTalon;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.Timer;
 
 public class Shooter {
 
-	CANTalon Shooter;
-	CANTalon Indexer;
+	WPI_TalonSRX Shooter;
+	WPI_TalonSRX Indexer;
 	
-	public Shooter(CANTalon Shooter, CANTalon Indexer)
+	public Shooter(WPI_TalonSRX Shooter, WPI_TalonSRX Indexer)
 	{
 		this.Shooter = Shooter;
 		this.Indexer = Indexer;
@@ -25,7 +25,7 @@ public class Shooter {
 		}
 		else if(Button && Start)
 		{
-			Shooter.set(-.65);
+			Shooter.set(-.75);
 			time.reset();
 			time.start();
 			Start = false;

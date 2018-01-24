@@ -1,18 +1,18 @@
 package org.usfirst.frc.team4361.robot;
 
-import com.ctre.CANTalon;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Timer;
 
 public class Pusher {
 
-	CANTalon CAN;
+	WPI_TalonSRX CAN;
 	DigitalInput limit;
 	boolean start, delay;
 	
 	Timer timer, delayTimer;
 	
-	public Pusher(CANTalon CAN, DigitalInput limit)
+	public Pusher(WPI_TalonSRX CAN, DigitalInput limit)
 	{
 		this.CAN = CAN;
 		this.limit = limit;
@@ -32,10 +32,8 @@ public class Pusher {
 
 			delay = false;
 		}
-		if(delayTimer.get() > .1 && delay == false)
+		if(delayTimer.get() > .5 && delay == false)
 		{
-			System.out.println("Delay End");
-			
 			delayTimer.stop();
 			delayTimer.reset();
 			
@@ -44,8 +42,6 @@ public class Pusher {
 		
 		if(start)
 		{
-			System.out.println("Start Push");
-			
 			CAN.set(speed);
 			
 			start = false;
@@ -56,8 +52,6 @@ public class Pusher {
 		
 		if(timer.get() > time && !start)
 		{
-			System.out.println("Stop Push");
-			
 			CAN.set(0);
 			
 			start = false;
@@ -83,7 +77,6 @@ public class Pusher {
 	{
 		if(limit.get())
 		{
-			System.out.println("Back");
 			CAN.set(.2);
 		}
 		else

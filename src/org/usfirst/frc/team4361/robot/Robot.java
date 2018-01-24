@@ -4,19 +4,15 @@ import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Joystick;
-import com.ctre.CANTalon;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.CameraServer;
-import edu.wpi.cscore.UsbCamera;
-import edu.wpi.cscore.CvSource;
-import edu.wpi.cscore.CvSink;
-import org.opencv.core.Mat;
-import org.opencv.imgproc.Imgproc;
 import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Relay;
 import edu.wpi.first.wpilibj.Servo;
+import edu.wpi.first.wpilibj.XboxController;
 
 
 /**
@@ -32,19 +28,20 @@ public class Robot extends IterativeRobot {
 	
 	Relay[] relay;
 	
-	CANTalon[] CAN;
+	WPI_TalonSRX[] CAN;
 	Joystick[] stick;
+	XboxController XContr;
 	
 	Encoder[] enc;
 
 	Servo[] Doors;
 	
-	double stick0Y, stick1Y, stick1X, leftInput, rightInput;
+	double stick0Y, stick0X, stick1Y, stick1X, leftInput, rightInput;
 	
 	Drive Left, Right, Climber, Intake, Agitator;
 	Shooter Shoot;
 	
-	boolean blueSide, gearing, gearChanged, agitatorChange, gearPosition, gearChangingState, hasPushed;
+	boolean blueSide, gearing, gearChanged, agitatorChange, gearPosition, gearChangingState, hasPushed, XboxMode;
 	
 	Autonomous auto;
 	
@@ -84,31 +81,35 @@ public class Robot extends IterativeRobot {
 		
 		
 		
-		CAN = new CANTalon[10];
+		CAN = new WPI_TalonSRX[10];
 		for (int i = 0; i < CAN.length; i++)
 		{
-			CAN[i] = new CANTalon(i);
+			CAN[i] = new WPI_TalonSRX(i);
 		}
 		
-		CANTalon[] left = {CAN[0], CAN[3]};
+		WPI_TalonSRX[] left = {CAN[0], CAN[3]};
 		Left = new Drive(left);
 	
-		CANTalon[] right = {CAN[7], CAN[8]};
+		WPI_TalonSRX[] right = {CAN[7], CAN[8]};
 		Right = new Drive(right);
 		
-		CANTalon[] intake = {CAN[6]};
+		WPI_TalonSRX[] intake = {CAN[6]};
 		Intake = new Drive(intake);
 		
 		Shoot = new Shooter(CAN[1], CAN[2]);
 		 
-		CANTalon[] climber = {CAN[5]};
+		WPI_TalonSRX[] climber = {CAN[5]};
 		Climber = new Drive(climber);
 		
-		stick = new Joystick[3];
+		stick = new Joystick[2];
 		for (int i = 0; i < stick.length; i++)
 		{
 			stick[i] = new Joystick(i);
 		}
+		
+		XContr = new XboxController(2);
+		
+		XboxMode = false;
 		
 		push = new Pusher(CAN[9], limit[0]);
 		
@@ -126,15 +127,14 @@ public class Robot extends IterativeRobot {
 		chooser.addDefault("Drive to Line", "line");
 		chooser.addObject("Feeder Side", "feeder");
 		chooser.addObject("Airship Side", "airship");
-		chooser.addObject("Airship Drop", "airshipDrop");
+		//chooser.addObject("Airship Drop", "airshipDrop");
 		chooser.addObject("Boiler Side", "boiler");
 		chooser.addObject("Shoot in Boiler", "shootBoiler");
+		chooser.addObject("Test", "test");
 		
 		//SmartDashboard Values
 		SmartDashboard.putData("Auto choices", chooser);
 		SmartDashboard.putBoolean("BlueSide", false);
-		SmartDashboard.putNumber("ShooterVoltage", CAN[5].getOutputVoltage());
-		SmartDashboard.putNumber("ClimberVoltage", CAN[7].getOutputVoltage());
 		SmartDashboard.putBoolean("Switched", false);
 	}
 
@@ -151,10 +151,17 @@ public class Robot extends IterativeRobot {
 	 */
 	@Override
 	public void autonomousInit() {
-		if(holder.gearPosition)
+		try
 		{
-			holder.ChangePosition(true);
-			holder.ChangePosition(false);
+			if(holder.gearPosition)
+			{
+				holder.ChangePosition(true);
+				holder.ChangePosition(false);
+			}
+		}
+		catch (Exception e)
+		{
+			
 		}
 		
 		blueSide = SmartDashboard.getBoolean("BlueSide", false);
@@ -194,6 +201,10 @@ public class Robot extends IterativeRobot {
 			auto.ShootInBoiler();
 			break;
 			
+		case "test":
+			auto.Test();
+			break;
+			
 		case "line":
 		default:
 			auto.defaultGoToBaseLine();
@@ -208,60 +219,35 @@ public class Robot extends IterativeRobot {
 	public void teleopPeriodic() 
 	{
 		
-		if(stick[2].getRawButton(1) && agitatorChange)
+		if(XContr.getStartButtonPressed())
 		{
-			if(CAN[4].get() < 0)
-				CAN[4].set(0);
-			else
-				CAN[4].set(-.85);
-			agitatorChange = false;
-		}
-		else if(!stick[2].getRawButton(1) && !agitatorChange)
-		{
-			agitatorChange = true;
+			XboxMode = !XboxMode;
 		}
 		
 		boolean climber1, climber2;
-		boolean perfectStraight, perfectTurn;
+		boolean perfectStraight = false, perfectTurn = false;
 		
-		//Inputs from joystick and Main Xbox Controller
-		if(stick[0].getIsXbox())
+		//Inputs from Main Xbox Controller
+		if(XboxMode)
 		{
+			holder.ChangePosition(XContr.getYButton());
+			
 			//Gearing Input
-			if(stick[0].getRawButton(1) && !gearChanged)
+			if(XContr.getBButtonPressed())
 			{
 				gearing = !gearing;
-				gearChanged = true;
 			}
-			if(!stick[0].getRawButton(1) && gearChanged)
-			{
-				gearChanged = false;
-			}
-			
-			
-			perfectStraight = stick[0].getRawAxis(3) != 0;
-			perfectTurn = stick[0].getRawAxis(2) != 0;
 			
 
-			stick0Y = stick[0].getRawAxis(1);
-			stick1Y = stick[0].getRawAxis(5);
-			stick1X = stick[0].getRawAxis(4);
-			
-			
 			//Climbing
-			climber1 = stick[0].getRawButton(3);
-			climber2 = stick[0].getRawButton(6);
+			climber1 = XContr.getTriggerAxis(Hand.kRight) != 0;
+			climber2 = XContr.getTriggerAxis(Hand.kLeft) != 0;
 			
-			if(stick[0].getRawButton(2))
-			{
-				stick[0].setRumble(RumbleType.kLeftRumble, 1);
-				stick[0].setRumble(RumbleType.kRightRumble, 1);
-			}
-			else
-			{
-				stick[0].setRumble(RumbleType.kLeftRumble, 0);
-				stick[0].setRumble(RumbleType.kRightRumble, 0);
-			}
+
+			stick0Y = XContr.getRawAxis(1);
+			stick0X = XContr.getRawAxis(0);
+			
+			
 		}
 		else
 		{
@@ -281,7 +267,6 @@ public class Robot extends IterativeRobot {
 			holder.ChangePosition(stick[1].getRawButton(1));
 			
 			
-			
 			perfectStraight = stick[1].getRawButton(3);
 			perfectTurn = stick[1].getRawButton(4);
 			
@@ -295,20 +280,22 @@ public class Robot extends IterativeRobot {
 			climber1 = stick[0].getRawButton(3);
 			climber2 = stick[0].getRawButton(4);
 		}
-		
-		
-		
-		if(gearing)
+
+		if(XboxMode)
 		{
-			leftInput = -stick0Y/2;
-			rightInput = stick1Y/2;
-			
-			stick1X = stick1X/2;
+			leftInput = stick0X - stick0Y;
+			rightInput = stick0X + stick0Y;
 		}
 		else
 		{
 			leftInput = -stick0Y;
 			rightInput = stick1Y;
+		}
+		
+		if(gearing)
+		{
+			leftInput = leftInput/2;
+			rightInput = rightInput/2;
 		}
 		
 		if(perfectStraight)
@@ -320,6 +307,7 @@ public class Robot extends IterativeRobot {
 			leftInput = stick1X;
 			rightInput = stick1X;
 		}
+
 		
 		if(SmartDashboard.getBoolean("Switched", false))
 		{
@@ -327,6 +315,7 @@ public class Robot extends IterativeRobot {
 			rightInput = leftInput;
 			leftInput = tempSwitch;
 		}
+		
 		
 		Left.drive(leftInput);
 		Right.drive(rightInput);
@@ -340,40 +329,33 @@ public class Robot extends IterativeRobot {
 		else
 			Climber.drive(0);
 		
-		if(stick[2].getIsXbox())
+		if(XContr.getAButtonPressed())
 		{
-			//Auto Fixer
-			if(stick[2].getRawButton(2))
-			{
-				Intake.drive(-.01);
-				CAN[4].set(.75);
-				agitatorChange = true;
-				Shoot.Fix(stick[2].getRawButton(2));
-				
-			}
+			if(CAN[4].get() < 0)
+				CAN[4].set(0);
 			else
-			{
-				//Intake
-				if(stick[2].getRawButton(5))
-					Intake.drive(.7);
-				else
-					Intake.drive(0);
-				
-	
-				//Shooter
-				Shoot.Shoot(stick[2].getRawButton(6));
-			}
-			
-			if(stick[2].getRawButton(3))
-			{
-				stick[2].setRumble(RumbleType.kLeftRumble, 1);
-				stick[2].setRumble(RumbleType.kRightRumble, 1);
-			}
-			else
-			{
-				stick[2].setRumble(RumbleType.kLeftRumble, 0);
-				stick[2].setRumble(RumbleType.kRightRumble, 0);
-			}
+				CAN[4].set(-.85);
+		}
+		
+		//Intake
+		if(XContr.getBumper(Hand.kLeft))
+			Intake.drive(.8);
+		else
+			Intake.drive(0);
+		
+
+		//Shooter
+		Shoot.Shoot(XContr.getBumper(Hand.kRight));
+		
+		if(XContr.getXButtonPressed())
+		{
+			XContr.setRumble(RumbleType.kLeftRumble, 1);
+			XContr.setRumble(RumbleType.kRightRumble, 1);
+		}
+		else
+		{
+			XContr.setRumble(RumbleType.kLeftRumble, 0);
+			XContr.setRumble(RumbleType.kRightRumble, 0);
 		}
 		
 		//Smartdashboard Values
@@ -383,10 +365,11 @@ public class Robot extends IterativeRobot {
 			SmartDashboard.putNumber("Agitator Current", CAN[4].getOutputCurrent());
 			SmartDashboard.putNumber("Shooter Current", CAN[1].getOutputCurrent());
 			SmartDashboard.putNumber("Climber Current", CAN[5].getOutputCurrent());
-			SmartDashboard.putBoolean("Gear", gearing);
+			SmartDashboard.putBoolean("Geared", gearing);
 			//SmartDashboard.putBoolean("GearIn", !limit[0].get());
 			//SmartDashboard.putNumber("Pusher Current", CAN[9].getOutputCurrent());
 			SmartDashboard.putBoolean("Gear Position", !holder.gearPosition);
+			SmartDashboard.putBoolean("Xbox Control Mode", XboxMode);
 		}
 		catch (Exception e)
 		{

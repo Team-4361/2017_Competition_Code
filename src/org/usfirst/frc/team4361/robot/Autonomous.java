@@ -1,11 +1,12 @@
 package org.usfirst.frc.team4361.robot;
 
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 import com.kauailabs.navx.frc.AHRS;
 
 import edu.wpi.first.wpilibj.*;
 
 
-public class Autonomous {
+public class Autonomous implements PIDOutput{
 
 	double diameter;
 	double circumference;
@@ -30,6 +31,26 @@ public class Autonomous {
 	boolean redSide;
 	
 	GearHolder holder;
+
+	PIDController turnController;
+	double rotateToAngleRate;
+	WPI_TalonSRX[] CAN;
+	
+	/* The following PID Controller coefficients will need to be tuned */
+	/* to match the dynamics of your drive system.  Note that the      */
+	/* SmartDashboard in Test mode has support for helping you tune    */
+	/* controllers by displaying a form where you can enter new P, I,  */
+	/* and D constants and test the mechanism.                         */
+	
+	static final double kP = 0.03;
+	static final double kI = 0.01;
+	static final double kD = 0.00;
+	static final double kF = 0.00;
+	  
+	/* This tuning parameter indicates how close to "on target" the    */
+	/* PID Controller will attempt to get.  */
+	
+	static final double kToleranceDegrees = 2.0f;
 	
 	//Constructers
 	public Autonomous(Drive left, Drive right, Shooter shoot, GearHolder holder, boolean redSide)
@@ -58,7 +79,19 @@ public class Autonomous {
 		this.right = right;
 		this.shoot = shoot;
 		
-		navx = new AHRS(SerialPort.Port.kMXP);
+		try {
+	          /* Communicate w/navX-MXP via the MXP SPI Bus.                                     */
+	          /* Alternatively:  I2C.Port.kMXP, SerialPort.Port.kMXP or SerialPort.Port.kUSB     */
+	          /* See http://navx-mxp.kauailabs.com/guidance/selecting-an-interface/ for details. */
+			navx = new AHRS(SPI.Port.kMXP);
+	      } catch (RuntimeException ex ) {
+	          DriverStation.reportError("Error instantiating navX-MXP:  " + ex.getMessage(), true);
+	      }
+	      turnController = new PIDController(kP, kI, kD, kF, navx, this);
+	      turnController.setInputRange(-180.0f,  180.0f);
+	      turnController.setOutputRange(-1.0, 1.0);
+	      turnController.setAbsoluteTolerance(kToleranceDegrees);
+	      turnController.setContinuous(true);
 		
 		this.redSide = redSide;
 	}
@@ -83,7 +116,6 @@ public class Autonomous {
 	{
 		//turn = new TurnControl(navx.getAngle());
 		if(runNum == 0)
-			//turnNavx(90);
 			goDistance(94 - robotLength, -.4);
 	}
 	
@@ -92,7 +124,7 @@ public class Autonomous {
 		if(runNum == 0)
 			goDistance(108.39373 - robotLength, -.5);
 		if(runNum == 1)
-			turnEncoder(-60);
+			turnEncoder(-60, .3);
 		if(runNum == 2)
 			goDistance(46.79856 - robotLength, -.5);
 	}
@@ -102,7 +134,7 @@ public class Autonomous {
 		if(runNum == 0)
 			goDistance(108.39373 - robotLength, -.5);
 		if(runNum == 1)
-			turnEncoder(-60);
+			turnEncoder(-60, .3);
 		if(runNum == 2)
 			goDistance(46.79856 - robotLength, -.5);
 		if(runNum == 3)
@@ -140,7 +172,7 @@ public class Autonomous {
 		if(runNum == 0)
 			goDistance(89.09147 - robotLength, -.5);
 		if(runNum == 1)
-			turnEncoder(60);
+			turnEncoder(60, .3);
 		if(runNum == 2)
 			goDistance(85.30307 + robotLength, -.5);
 	}
@@ -150,7 +182,7 @@ public class Autonomous {
 		if(runNum == 0)
 			goDistance(89.09147 - robotLength, -.5);
 		if(runNum == 1)
-			turnEncoder(60);
+			turnEncoder(60, .3);
 		if(runNum == 2)
 			goDistance(85.30307 + robotLength, -.5);
 		if(runNum == 3)
@@ -161,15 +193,36 @@ public class Autonomous {
 			ChangeGear();
 	}
 	
-	
 	public void ShootInBoiler()
 	{
 		if(runNum == 0)
 			goDistance(67.8642 - robotLength, .3);
 		if(runNum == 1)
-			turnEncoder(-46.24);
+			turnEncoder(-46.24, .3);
 		if(runNum == 2)
 			goDistance(84.46555 - robotLength, -.3);
+		if(runNum == 3)
+			StartShooter(7);
+		if(runNum == 4)
+			goDistance(20, .5);
+		if(runNum == 5)
+			turnEncoder(-45, .3);
+		if(runNum == 6)
+			goDistance(40, .5);
+	}
+	
+	public void Test()
+	{
+		if(runNum == 0)
+			goDistance(10 * 12, .3);
+		if(runNum == 1)
+			turn(90, .5);
+		if(runNum == 2)
+			goDistance(10 * 12, .3);
+		if(runNum == 3)
+			turn(-90, .5);
+		if(runNum == 4)
+			goDistance(2 * 12, .3);
 	}
 	
 	
@@ -242,10 +295,18 @@ public class Autonomous {
 		}
 	}
 
-	private void turnEncoder(double angle)
+	private void turn(double angle, double speed)
 	{
 		if(redSide) angle = -angle;
 		
+		if(navx != null)
+			turnNavx(angle, speed);
+		else
+			turnEncoder(angle, speed);
+	}
+	
+	private void turnEncoder(double angle, double speed)
+	{
 		double percent = Math.abs(angle)/360;
 		if(!hasRun)
 		{
@@ -254,14 +315,14 @@ public class Autonomous {
 		}
 		if(!hasRun&&angle<0)
 		{
-			right.drive(.3);
-			left.drive(.3);
+			right.drive(speed);
+			left.drive(speed);
 			hasRun = true;
 		}
 		else if(!hasRun&&angle>0)
 		{
-			right.drive(-.3);
-			left.drive(-.3);
+			right.drive(-speed);
+			left.drive(-speed);
 			hasRun = true;
 		}
 		else if(!hasRun&&angle==0)
@@ -281,59 +342,51 @@ public class Autonomous {
 				runNum--;
 		}
 	}
-	
-	private void turn(double angle)
+
+	private void turnNavx(double angle, double speed)
 	{
-		if(redSide) angle = -angle;
-		
-		
-		System.out.println("Current is " + navx.getAngle());
-		
-		double speed = turn.turnAngle(navx.getAngle(), angle);
-		System.out.println(speed);
-   		//left.drive(speed);
-		//right.drive(speed);
-		if(speed==0)
-		{
-			System.out.println("Done");
-			
-			runNum++;
-		}
-	}
-	
-	private void turnNavx(double angle)
-	{
-		if(redSide) angle = -angle;
-		
 		if(!hasRun)
 		{
-			StartAngle = navx.getAngle();
-		}
-		if(!hasRun&&angle<0)
-		{
-			right.drive(.3);
-			left.drive(.3);
+			navx.reset();
 			hasRun = true;
-		}
-		else if(!hasRun&&angle>0)
-		{
-			right.drive(-.3);
-			left.drive(-.3);
-			hasRun = true;
-		}
-		else if(!hasRun&&angle==0)
-			hasRun=true;
-		
-		if(Math.abs(StartAngle - navx.getAngle()) >= Math.abs(angle))
-		{
-			right.drive(0);
-			left.drive(0);
 			
-			hasRun = false;
-			if(runNum>=0)
-				runNum++;
-			else
-				runNum--;
+			turnController.enable();
+			turnController.setOutputRange(-speed, speed);
+			turnController.setSetpoint(angle * 1f);
+		}
+		
+		left.drive(rotateToAngleRate);
+		right.drive(rotateToAngleRate);
+		
+		if(turnController.onTarget())
+		{
+			if(timer.get() == 0)
+			{
+				timer.reset();
+				
+				timer.start();
+			}
+			if(timer.get() > .25)
+			{
+				right.drive(0);
+				left.drive(0);
+				
+				turnController.disable();
+				
+				timer.stop();
+				timer.reset();
+				
+				hasRun = false;
+				if(runNum>=0)
+					runNum++;
+				else
+					runNum--;
+			}
+		}
+		else
+		{
+			timer.stop();
+			timer.reset();
 		}
 	}
 	
@@ -363,14 +416,18 @@ public class Autonomous {
 		
 		if(!hasRun)
 		{
+			timer.reset();
 			timer.start();
 
 			hasRun = true;
 		}
 		
 		
-		if(timer.get() > .3)
+		if(timer.get() > .3 && hasRun == true)
 		{
+			timer.stop();
+			timer.reset();
+			
 			hasRun = false;
 			if(runNum>=0)
 				runNum++;
@@ -378,5 +435,41 @@ public class Autonomous {
 				runNum--;
 		}
 		
+	}
+
+	private void StartShooter(double time)
+	{
+		if(!hasRun)
+		{
+			timer.reset();
+			timer.start();
+			
+			
+
+			hasRun = true;
+		}
+		
+		
+		shoot.Shoot(timer.get() <= time);
+		
+		if(timer.get() > time && hasRun == true)
+		{
+			timer.stop();
+			timer.reset();
+			
+			shoot.Shoot(false);
+			
+			hasRun = false;
+			if(runNum>=0)
+				runNum++;
+			else
+				runNum--;
+		}
+	}
+	
+	@Override
+	public void pidWrite(double output)
+	{
+		rotateToAngleRate = output;
 	}
 }

@@ -1,18 +1,18 @@
 package org.usfirst.frc.team4361.robot;
-import com.ctre.CANTalon;
+import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
 public class Drive {
 	
-	CANTalon[] CAN;
+	WPI_TalonSRX[] CAN;
 	
-	public Drive(CANTalon[] CAN)
+	public Drive(WPI_TalonSRX[] CAN)
 	{
 		this.CAN = CAN;
 	}
 	
 	public void drive(double val)
 	{
-		for (CANTalon tal : CAN)
+		for (WPI_TalonSRX tal : CAN)
 		{
 			tal.set(val);
 		}
