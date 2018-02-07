@@ -347,7 +347,7 @@ public class Robot extends IterativeRobot {
 		//Shooter
 		Shoot.Shoot(XContr.getBumper(Hand.kRight));
 		
-		if(XContr.getXButtonPressed())
+		if(XContr.getXButton())
 		{
 			XContr.setRumble(RumbleType.kLeftRumble, 1);
 			XContr.setRumble(RumbleType.kRightRumble, 1);
@@ -362,10 +362,10 @@ public class Robot extends IterativeRobot {
 
 		try
 		{
-			SmartDashboard.putNumber("Agitator Current", CAN[4].getOutputCurrent());
-			SmartDashboard.putNumber("Shooter Current", CAN[1].getOutputCurrent());
-			SmartDashboard.putNumber("Climber Current", CAN[5].getOutputCurrent());
-			SmartDashboard.putBoolean("Geared", gearing);
+			//SmartDashboard.putNumber("Agitator Current", CAN[4].getOutputCurrent());
+			//SmartDashboard.putNumber("Shooter Current", CAN[1].getOutputCurrent());
+			//SmartDashboard.putNumber("Climber Current", CAN[5].getOutputCurrent());
+			//SmartDashboard.putBoolean("Geared", gearing);
 			//SmartDashboard.putBoolean("GearIn", !limit[0].get());
 			//SmartDashboard.putNumber("Pusher Current", CAN[9].getOutputCurrent());
 			SmartDashboard.putBoolean("Gear Position", !holder.gearPosition);

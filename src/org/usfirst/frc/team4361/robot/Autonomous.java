@@ -10,7 +10,7 @@ public class Autonomous implements PIDOutput{
 
 	double diameter;
 	double circumference;
-	double distanceNeeded, large, StartAngle;
+	double distanceNeeded, StartAngle;
 	final double robotLength;
 	
 	boolean isEnc, hasRun;
@@ -42,15 +42,15 @@ public class Autonomous implements PIDOutput{
 	/* controllers by displaying a form where you can enter new P, I,  */
 	/* and D constants and test the mechanism.                         */
 	
-	static final double kP = 0.03;
-	static final double kI = 0.01;
+	static final double kP = 0.05;
+	static final double kI = 0.001;
 	static final double kD = 0.00;
 	static final double kF = 0.00;
 	  
 	/* This tuning parameter indicates how close to "on target" the    */
 	/* PID Controller will attempt to get.  */
 	
-	static final double kToleranceDegrees = 2.0f;
+	static final double kToleranceDegrees = 0.5f;
 	
 	//Constructers
 	public Autonomous(Drive left, Drive right, Shooter shoot, GearHolder holder, boolean redSide)
@@ -67,7 +67,6 @@ public class Autonomous implements PIDOutput{
 			isEnc = false;
 		lEncNum = 0;
 		rEncNum = 0;
-		large = 0;
 		hasRun = false;
 		runNum = 0;
 		timer = new Timer();
@@ -235,9 +234,7 @@ public class Autonomous implements PIDOutput{
 		
 		if(!hasRun)
 		{
-			right.drive(-speed);
-			left.drive(speed);
-			timer.start();
+			timerSpeed.start();
 		}
 		
 		if(isEnc)
@@ -249,14 +246,34 @@ public class Autonomous implements PIDOutput{
 				hasRun = true;
 			}
 			
-			large = Math.max(Math.abs(lEnc.getDistance()), Math.abs(rEnc.getDistance()));
+			speed *= -1;
 			
-			if(large * circumference > dist || timer.get() - 7 > timeNeeded)
+			if(Math.abs(lEnc.getDistance()) - Math.abs(rEnc.getDistance()) > 5)
+			{
+				left.drive(-speed);
+				right.drive(speed-.1);
+			}
+			else if(Math.abs(rEnc.getDistance()) - Math.abs(lEnc.getDistance()) > 5)
+			{
+				left.drive(-speed+.1);
+				right.drive(speed);
+			}
+			else
+			{
+				left.drive(-speed);
+				right.drive(speed);
+			}
+			
+			double small = Math.min(Math.abs(lEnc.getDistance()), Math.abs(rEnc.getDistance()));
+			
+			if(small * circumference > dist || timerSpeed.get()> timeNeeded + 5)
 			{
 				System.out.println("Stop");
 				
 				right.drive(0);
 				left.drive(0);
+				
+				turnController.disable();
 				
 				hasRun = false;
 				if(runNum>=0)
@@ -328,7 +345,7 @@ public class Autonomous implements PIDOutput{
 		else if(!hasRun&&angle==0)
 			hasRun=true;
 		
-		large = Math.max(Math.abs(lEnc.getDistance()), Math.abs(rEnc.getDistance()));
+		double large = Math.max(Math.abs(lEnc.getDistance()), Math.abs(rEnc.getDistance()));
 		
 		if(large*circumference >= (19.5*Math.PI)*percent)
 		{
@@ -363,9 +380,9 @@ public class Autonomous implements PIDOutput{
 			if(timer.get() == 0)
 			{
 				timer.reset();
-				
 				timer.start();
 			}
+			
 			if(timer.get() > .25)
 			{
 				right.drive(0);

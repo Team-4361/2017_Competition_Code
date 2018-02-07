@@ -18,6 +18,7 @@ public class TurnControl {
 		cur=1;
 		prev=1;
 	}
+	
 	public double turnAngle(double current, double target)
 	{
 		//get angle and ensure its 0<angle<=360
